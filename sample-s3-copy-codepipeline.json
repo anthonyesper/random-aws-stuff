@@ -1,0 +1,72 @@
+{
+  "pipeline": {
+    "name": "Copy files to S3 bucket",
+    "roleArn": "arn:aws:iam::123456789012:role/CodePipelineServiceRole",
+    "artifactStore": {
+      "type": "S3",
+      "location": "my-artifact-store"
+    },
+    "stages": [
+      {
+        "name": "Source",
+        "actions": [
+          {
+            "name": "Source",
+            "actionTypeId": {
+              "category": "Source",
+              "owner": "AWS",
+              "provider": "S3",
+              "version": "1"
+            },
+            "outputArtifacts": [
+              {
+                "name": "source-output"
+              }
+            ],
+            "configuration": {
+              "S3Bucket": "my-source-bucket",
+              "S3ObjectKey": "my-source-folder/*",
+              "PollForSourceChanges": "false"
+            },
+            "runOrder": 1
+          }
+        ]
+      },
+      {
+        "name": "Deploy",
+        "actions": [
+          {
+            "name": "DeployToS3",
+            "actionTypeId": {
+              "category": "Deploy",
+              "owner": "AWS",
+              "provider": "S3",
+              "version": "1"
+            },
+            "inputArtifacts": [
+              {
+                "name": "source-output"
+              }
+            ],
+            "configuration": {
+              "BucketName": "my-destination-bucket",
+              "Extract": "true",
+              "ObjectKey": "my-destination-folder/",
+              "VpcConfiguration": {
+                "VpcId": "vpc-1234567890abcdef0",
+                "Subnets": [
+                  "subnet-0123456789abcdef",
+                  "subnet-0123456789abcdef"
+                ],
+                "SecurityGroupIds": [
+                  "sg-0123456789abcdef"
+                ]
+              }
+            },
+            "runOrder": 1
+          }
+        ]
+      }
+    ]
+  }
+}
