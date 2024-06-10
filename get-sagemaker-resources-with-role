@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Set the role to assume
+ROLE_ARN="arn:aws:iam::your-account-id:role/sandboxservicerole"
+ROLE_SESSION_NAME="SandboxServiceSession"
+
+# Assume the role
+TEMP_ROLE=$(aws sts assume-role --role-arn "$ROLE_ARN" --role-session-name "$ROLE_SESSION_NAME")
+
+# Extract the temporary credentials
+export AWS_ACCESS_KEY_ID=$(echo $TEMP_ROLE | jq -r '.Credentials.AccessKeyId')
+export AWS_SECRET_ACCESS_KEY=$(echo $TEMP_ROLE | jq -r '.Credentials.SecretAccessKey')
+export AWS_SESSION_TOKEN=$(echo $TEMP_ROLE | jq -r '.Credentials.SessionToken')
+
+# Function to list running SageMaker resources
+list_sagemaker_resources() {
+    echo "Running Notebook Instances:"
+    aws sagemaker list-notebook-instances --query "NotebookInstances[?NotebookInstanceStatus=='InService'].[NotebookInstanceName,NotebookInstanceStatus]"
+
+    echo "Running Training Jobs:"
+    aws sagemaker list-training-jobs --query "TrainingJobSummaries[?TrainingJobStatus=='InProgress'].[TrainingJobName,TrainingJobStatus]"
+
+    echo "Running Endpoints:"
+    aws sagemaker list-endpoints --query "Endpoints[?EndpointStatus=='InService'].[EndpointName,EndpointStatus]"
+
+    echo "Running Processing Jobs:"
+    aws sagemaker list-processing-jobs --query "ProcessingJobSummaries[?ProcessingJobStatus=='InProgress'].[ProcessingJobName,ProcessingJobStatus]"
+
+    echo "Running Transform Jobs:"
+    aws sagemaker list-transform-jobs --query "TransformJobSummaries[?TransformJobStatus=='InProgress'].[TransformJobName,TransformJobStatus]"
+
+    echo "Running Hyperparameter Tuning Jobs:"
+    aws sagemaker list-hyper-parameter-tuning-jobs --query "HyperParameterTuningJobSummaries[?HyperParameterTuningJobStatus=='InProgress'].[HyperParameterTuningJobName,HyperParameterTuningJobStatus]"
+}
+
+# List the SageMaker resources
+list_sagemaker_resources
+
+# Unset the temporary credentials
+unset AWS_ACCESS_KEY_ID
+unset AWS_SECRET_ACCESS_KEY
+unset AWS_SESSION_TOKEN
