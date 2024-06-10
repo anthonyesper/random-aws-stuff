@@ -1,0 +1,17 @@
+echo "Running Notebook Instances:"
+aws sagemaker list-notebook-instances --query "NotebookInstances[?NotebookInstanceStatus=='InService'].[NotebookInstanceName,NotebookInstanceStatus]"
+
+echo "Running Training Jobs:"
+aws sagemaker list-training-jobs --query "TrainingJobSummaries[?TrainingJobStatus=='InProgress'].[TrainingJobName,TrainingJobStatus]"
+
+echo "Running Endpoints:"
+aws sagemaker list-endpoints --query "Endpoints[?EndpointStatus=='InService'].[EndpointName,EndpointStatus]"
+
+echo "Running Processing Jobs:"
+aws sagemaker list-processing-jobs --query "ProcessingJobSummaries[?ProcessingJobStatus=='InProgress'].[ProcessingJobName,ProcessingJobStatus]"
+
+echo "Running Transform Jobs:"
+aws sagemaker list-transform-jobs --query "TransformJobSummaries[?TransformJobStatus=='InProgress'].[TransformJobName,TransformJobStatus]"
+
+echo "Running Hyperparameter Tuning Jobs:"
+aws sagemaker list-hyper-parameter-tuning-jobs --query "HyperParameterTuningJobSummaries[?HyperParameterTuningJobStatus=='InProgress'].[HyperParameterTuningJobName,HyperParameterTuningJobStatus]"
