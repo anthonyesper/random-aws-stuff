@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template to deploy Amazon Lex Bot and Lambda Function using pre-existing IAM role
+
+Parameters:
+  SandboxServiceRole:
+    Type: String
+    Description: ARN of the pre-existing role with necessary permissions
+
+Resources:
+  # Lambda Function
+  LexLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: LexLambdaFunction
+      Handler: index.lambda_handler
+      Role: !Ref SandboxServiceRole
+      Runtime: python3.8
+      Code:
+        ZipFile: |
+          import json
+
+          def lambda_handler(event, context):
+              user_input = event['currentIntent']['slots']['userInput']
+              response_message = generate_response(user_input)
+              return {
+                  'dialogAction': {
+                      'type': 'Close',
+                      'fulfillmentState': 'Fulfilled',
+                      'message': {
+                          'contentType': 'PlainText',
+                          'content': response_message
+                      }
+                  }
+              }
+
+          def generate_response(user_input):
+              return "This is a response to your input: " + user_input
+
+  # Lex Bot
+  LexBot:
+    Type: AWS::Lex::Bot
+    Properties:
+      Name: MyLexBot
+      Locale: en-US
+      ChildDirected: false
+      Intents:
+        - IntentName: !Ref LexIntent
+          IntentVersion: "$LATEST"
+
+  # Lex Bot Alias
+  LexBotAlias:
+    Type: AWS::Lex::BotAlias
+    Properties:
+      BotName: !Ref LexBot
+      BotVersion: "$LATEST"
+      Name: Prod
+
+  # Lex Intent
+  LexIntent:
+    Type: AWS::Lex::Intent
+    Properties:
+      Name: MyIntent
+      Description: "Sample Intent"
+      SampleUtterances:
+        - "Hello"
+        - "Hi"
+      FulfillmentActivity:
+        Type: CodeHook
+        CodeHook:
+          Uri: !GetAtt LexLambdaFunction.Arn
+          MessageVersion: "1.0"
+      Slots:
+        - Name: userInput
+          SlotType: AMAZON.AlphaNumeric
+          SlotConstraint: Optional
+          ValueElicitationPrompt:
+            Messages:
+              - ContentType: PlainText
+                Content: "Please provide your input"
+            MaxAttempts: 2
+
+Outputs:
+  LexBotName:
+    Description: "Name of the Lex Bot"
+    Value: !Ref LexBot
+
+  LexBotAlias:
+    Description: "Name of the Lex Bot Alias"
+    Value: !Ref LexBotAlias
+
+  LexLambdaFunctionArn:
+    Description: "ARN of the Lambda function"
+    Value: !GetAtt LexLambdaFunction.Arn
