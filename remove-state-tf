@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Define the list of account keys
+account_keys=("account1-key" "account2-key" "account3-key") # Add your account-specific S3 keys
+
+# Define the S3 bucket where the state files are stored
+s3_bucket="your-s3-bucket-name"
+
+# Define the resource to remove from the state
+resource_to_remove="module.example_resource.aws_instance.example"
+
+# Loop over each account key and remove the resource from the state
+for key in "${account_keys[@]}"; do
+  echo "Processing state for account key: $key"
+  
+  # Set the backend configuration for Terraform
+  cat > backend.tf <<EOL
+terraform {
+  backend "s3" {
+    bucket = "$s3_bucket"
+    key    = "$key"
+    region = "your-region"
+  }
+}
+EOL
+
+  # Initialize Terraform with the backend configuration
+  terraform init
+
+  # Remove the specified resource from the state
+  terraform state rm $resource_to_remove
+  
+  echo "Resource removed from state for account key: $key"
+done
+
+# Clean up the backend configuration file
+rm backend.tf
+
+echo "Completed resource removal from all account states."
