@@ -36,6 +36,11 @@ def stop_rds_instances():
         rds = boto3.client('rds')
         instances = rds.describe_db_instances()
         for instance in instances['DBInstances']:
+            # Skip Aurora instances
+            if instance['Engine'].startswith('aurora'):
+                logger.info(f"Skipping RDS instance: {instance['DBInstanceIdentifier']} (Aurora instance)")
+                continue
+
             tags_response = rds.list_tags_for_resource(ResourceName=instance['DBInstanceArn'])
             tags = {tag['Key']: tag['Value'] for tag in tags_response.get('TagList', [])}
             if tags.get('donotshutdown') != 'true':
