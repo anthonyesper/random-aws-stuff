@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Neptune full stack with gremlin and rd4j console"
+Parameters:
+  EC2SSHKeyPairName:
+    Description: "OPTIONAL: Name of an existing EC2 KeyPair to enable SSH access to the instances. Required only if an EC2ClientInstanceType is specified"
+    Type: String
+    ConstraintDescription: "Must be the name of an existing EC2 KeyPair in same region."
+    Default: ""
+  Env:
+    Description: "Environment tag, e.g. prod, nonprod."
+    Default: "test"
+    Type: String
+    AllowedPattern: "[a-z0-9]+"
+    MaxLength: 15
+  DbInstanceType:
+    Description: "Neptune DB instance type"
+    Type: String
+    Default: "db.serverless"
+    AllowedValues:
+      - "db.serverless"
+      - "db.t3.medium"
+      - "db.r6g.large"
+      - "db.r6g.xlarge"
+      - "db.r6g.2xlarge"
+      - "db.r6g.4xlarge"
+      - "db.r6g.8xlarge"
+      - "db.r5.large"
+      - "db.r5.xlarge"
+      - "db.r5.2xlarge"
+      - "db.r5.4xlarge"
+      - "db.r5.8xlarge"
+      - "db.r5.12xlarge"
+    ConstraintDescription: "Must be a valid Neptune instance type."
+  MinNCUs:
+    Description: "Min NCUs to be set on the Neptune cluster. Required if DBInstance type is db.serverless"
+    Default: 2.5
+    Type: Number
+    MinValue: 1
+    MaxValue: 128
+  MaxNCUs:
+    Description: "Max NCUs to be set on the Neptune cluster. Required if DBInstance type is db.serverless"
+    Default: 128
+    Type: Number
+    MinValue: 1
+    MaxValue: 128
+  NeptuneRole:
+    Description: "IAM Role that Neptune will use"
+    Type: String
+  DBClusterPort:
+    Description: "Port for the Neptune cluster"
+    Default: "8182"
+    Type: String
+Resources:
+  NeptuneStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/aws-neptune-customer-samples/v2/cloudformation-templates/neptune-base-stack.json"
+      TimeoutInMinutes: 60
+      Parameters:
+        Env: !Ref Env
+        DbInstanceType: !Ref DbInstanceType
+        MinNCUs: !Ref MinNCUs
+        MaxNCUs: !Ref MaxNCUs
+        DBClusterPort: !Ref DBClusterPort
+  NeptuneEC2Client:
+    Type: "AWS::CloudFormation::Stack"
+    Condition: CreateEC2Instance
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/aws-neptune-customer-samples/v2/cloudformation-templates/neptune-ec2-client.json"
+      TimeoutInMinutes: 30
+      Parameters:
+        Env: !Ref Env
+        VPC: vpc-0a1b2c3d4e5f67890
+        Subnet: subnet-0123456789abcdef0
+        NeptuneDBCluster: !GetAtt NeptuneStack.Outputs.DBClusterId
+        NeptuneDBClusterEndpoint: !GetAtt NeptuneStack.Outputs.DBClusterEndpoint
+        NeptuneDBClusterPort: !GetAtt NeptuneStack.Outputs.DBClusterPort
+        NeptuneClientRole: !Ref NeptuneRole
+Tags:
+  - Key: "Environment"
+    Value: !Ref Env
+  - Key: "Application"
+    Value: "Neptune"
+  - Key: "Owner"
+    Value: "YourOwnerTag"
+Outputs:
+  DBClusterId:
+    Description: "Neptune Cluster Identifier"
+    Value: !GetAtt NeptuneStack.Outputs.DBClusterId
+  DBClusterEndpoint:
+    Description: "Master Endpoint for Neptune Cluster"
+    Value: !GetAtt NeptuneStack.Outputs.DBClusterEndpoint
+  DBClusterPort:
+    Description: "Port for the Neptune Cluster"
+    Value: !GetAtt NeptuneStack.Outputs.DBClusterPort
