@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Base Template to create Neptune Stack inside a VPC"
+Parameters:
+  Env:
+    Description: "Environment tag, e.g. prod, nonprod."
+    Default: "test"
+    Type: String
+    AllowedPattern: "[a-z0-9]+"
+    MaxLength: 15
+  DbInstanceType:
+    Description: "Neptune DB instance type"
+    Type: String
+    Default: "db.serverless"
+    AllowedValues:
+      - "db.serverless"
+      - "db.t3.medium"
+      - "db.r6g.large"
+      - "db.r6g.xlarge"
+      - "db.r6g.2xlarge"
+      - "db.r6g.4xlarge"
+      - "db.r6g.8xlarge"
+      - "db.r5.large"
+      - "db.r5.xlarge"
+      - "db.r5.2xlarge"
+      - "db.r5.4xlarge"
+      - "db.r5.8xlarge"
+      - "db.r5.12xlarge"
+  MinNCUs:
+    Description: "Min NCUs to be set on the Neptune cluster."
+    Default: 2.5
+    Type: Number
+    MinValue: 1
+    MaxValue: 128
+  MaxNCUs:
+    Description: "Max NCUs to be set on the Neptune cluster."
+    Default: 128
+    Type: Number
+    MinValue: 1
+    MaxValue: 128
+  NeptuneRole:
+    Description: "IAM Role that Neptune will use"
+    Type: String
+  DBClusterPort:
+    Description: "Port for the Neptune cluster"
+    Default: "8182"
+    Type: String
+Resources:
+  NeptuneDBSubnetGroup:
+    Type: "AWS::Neptune::DBSubnetGroup"
+    Properties:
+      DBSubnetGroupDescription: "Neptune DB subnet group"
+      SubnetIds:
+        - subnet-0123456789abcdef0
+        - subnet-0987654321fedcba0
+      Tags:
+        - Key: "Name"
+          Value: !Sub "Neptune-${Env}"
+        - Key: "Application"
+          Value: "NeptuneBase"
+  NeptuneDBCluster:
+    Type: "AWS::Neptune::DBCluster"
+    Properties:
+      DBSubnetGroupName: !Ref NeptuneDBSubnetGroup
+      VpcSecurityGroupIds:
+        - sg-0a1b2c3d4e5f67890  # Hardcoded security group ID
+      Port: !Ref DBClusterPort
+      IamAuthEnabled: true
+      ServerlessScalingConfiguration:
+        MinCapacity: !Ref MinNCUs
+        MaxCapacity: !Ref MaxNCUs
+      AssociatedRoles:
+        - RoleArn: !Ref NeptuneRole
+      Tags:
+        - Key: "Name"
+          Value: !Sub "Neptune-${Env}"
+        - Key: "Application"
+          Value: "NeptuneBase"
+Outputs:
+  DBClusterId:
+    Description: "Neptune Cluster Identifier"
+    Value: !Ref NeptuneDBCluster
+  DBSubnetGroupId:
+    Description: "Neptune DBSubnetGroup Identifier"
+    Value: !Ref NeptuneDBSubnetGroup
+  NeptuneSG:
+    Description: "Security Group for Neptune"
+    Value: sg-0a1b2c3d4e5f67890  # Hardcoded security group ID
