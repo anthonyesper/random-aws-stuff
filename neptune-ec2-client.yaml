@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Demo Template to create Neptune EC2 Client with gremlin and rdf4j console"
+Parameters:
+  LatestAmiId:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+  EC2SSHKeyPairName:
+    Description: "Name of an existing EC2 KeyPair to enable SSH access to the instances. Required Input"
+    Type: "AWS::EC2::KeyPair::KeyName"
+  Env:
+    Description: "Environment tag, e.g. prod, nonprod."
+    Default: "test"
+    Type: String
+    AllowedPattern: "[a-z0-9]+"
+    MaxLength: 15
+  EC2ClientInstanceType:
+    Description: "EC2 client instance"
+    Type: String
+    Default: "r5.xlarge"
+    AllowedValues:
+      - "t3.micro"
+      - "t3.small"
+      - "t3.medium"
+      - "m5.large"
+      - "m5.xlarge"
+      - "m5.2xlarge"
+      - "m5.4xlarge"
+      - "m5.12xlarge"
+      - "r5.large"
+      - "r5.xlarge"
+      - "r5.2xlarge"
+      - "r5.4xlarge"
+      - "r5.12xlarge"
+  NeptuneRole:
+    Description: "IAM Role that Neptune will use"
+    Type: String
+Resources:
+  NeptuneEC2ClientInstance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      KeyName: !Ref EC2SSHKeyPairName
+      InstanceType: !Ref EC2ClientInstanceType
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref NeptuneEC2InstanceProfile
+      SubnetId: subnet-0123456789abcdef0  # Hardcoded subnet ID
+      SecurityGroupIds:
+        - sg-0a1b2c3d4e5f67890  # Hardcoded security group ID
+      Tags:
+        - Key: "Name"
+          Value: !Sub "Neptune-${Env}"
+        - Key: "StackId"
+          Value: !Sub "${AWS::StackName}"
+        - Key: "Stack"
+          Value: !Sub "${AWS::Region}-${AWS::StackName}"
+        - Key: "Application"
+          Value: "NeptuneCloudformation"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          yum -y install python-pip java-1.8.0-devel
+          yum -y remove java-1.7.0-openjdk
+          pip install --upgrade awscli
+          # Customization script
+          ${NeptuneEC2ClientCustomizationScript}
+  NeptuneEC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref NeptuneRole
+Outputs:
+  EC2Client:
+    Description: "EC2 client Identifier"
+    Value: !Ref NeptuneEC2ClientInstance
+  SSHAccess:
+    Description: "This is how you gain remote access to the EC2 client."
+    Value: !Sub "ssh ec2-user@${NeptuneEC2ClientInstance.PublicIp} -i ${EC2SSHKeyPairName}.pem"
+  EC2SSHTunnelCommand:
+    Description: "Command to connect to the local web server on the EC2 in VPC."
+    Value: !Sub "ssh ec2-user@${NeptuneEC2ClientInstance.PublicIp} -i ${EC2SSHKeyPairName}.pem -L localhost:8080:localhost:8080"
