@@ -1,0 +1,193 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: CloudFormation template for monitoring all SageMaker endpoints without alarms
+
+Resources:
+  EndpointMonitoringDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: AllSageMakerEndpointsDashboard
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "height": 3,
+              "width": 24,
+              "y": 0,
+              "x": 0,
+              "type": "text",
+              "properties": {
+                "markdown": "# SageMaker Endpoints Dashboard \n### Monitoring all SageMaker Endpoints in Region: **${AWS::Region}**"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 3,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["/aws/sagemaker/Endpoints", "CPUUtilization"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "CPU Utilization (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 3,
+              "x": 8,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["/aws/sagemaker/Endpoints", "MemoryUtilization"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Memory Utilization (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 3,
+              "x": 16,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["/aws/sagemaker/Endpoints", "DiskUtilization"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Disk Utilization (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 9,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["/aws/sagemaker/Endpoints", "GPUUtilization"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "GPU Utilization (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 9,
+              "x": 8,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["/aws/sagemaker/Endpoints", "GPUMemoryUtilization"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "GPU Memory Utilization (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 9,
+              "x": 16,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["AWS/SageMaker", "Invocations"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Invocations (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 15,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["AWS/SageMaker", "Invocation4XXErrors"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "4XX Errors (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 15,
+              "x": 8,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["AWS/SageMaker", "Invocation5XXErrors"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "5XX Errors (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 15,
+              "x": 16,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["AWS/SageMaker", "ModelLatency"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Model Latency (All Endpoints)"
+              }
+            },
+            {
+              "height": 6,
+              "width": 8,
+              "y": 21,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  ["AWS/SageMaker", "OverheadLatency"]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Overhead Latency (All Endpoints)"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  DashboardName:
+    Description: The name for the CloudWatch dashboard
+    Value: !Ref EndpointMonitoringDashboard
+
+  DashboardUrl:
+    Description: The URL to the CloudWatch Dashboard
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=AllSageMakerEndpointsDashboard"
