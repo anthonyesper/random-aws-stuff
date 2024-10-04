@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: CloudFormation template for dynamically monitoring all SageMaker endpoints
+
+Resources:
+  SageMakerUtilizationDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: SageMakerResourceUtilizationDynamic
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "height": 3,
+              "width": 24,
+              "y": 0,
+              "x": 0,
+              "type": "text",
+              "properties": {
+                "markdown": "# SageMaker Resource Utilization Dashboard \n### Dynamically monitoring all SageMaker Endpoints in Region: **${AWS::Region}**"
+              }
+            },
+            {
+              "height": 6,
+              "width": 24,
+              "y": 3,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "SEARCH('Namespace=\"AWS/SageMaker\" MetricName=\"CPUUtilization\"', 'Average')" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "CPU Utilization for All Endpoints"
+              }
+            },
+            {
+              "height": 6,
+              "width": 24,
+              "y": 9,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "SEARCH('Namespace=\"AWS/SageMaker\" MetricName=\"MemoryUtilization\"', 'Average')" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Memory Utilization for All Endpoints"
+              }
+            },
+            {
+              "height": 6,
+              "width": 24,
+              "y": 15,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "SEARCH('Namespace=\"AWS/SageMaker\" MetricName=\"DiskUtilization\"', 'Average')" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Disk Utilization for All Endpoints"
+              }
+            },
+            {
+              "height": 6,
+              "width": 24,
+              "y": 21,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                  [ "SEARCH('Namespace=\"AWS/SageMaker\" MetricName=\"Invocations\"', 'Sum')" ]
+                ],
+                "region": "${AWS::Region}",
+                "title": "Total Invocations for All Endpoints"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  DashboardName:
+    Description: The name for the CloudWatch dashboard
+    Value: !Ref SageMakerUtilizationDashboard
+
+  DashboardUrl:
+    Description: The URL to the CloudWatch Dashboard
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=SageMakerResourceUtilizationDynamic"
