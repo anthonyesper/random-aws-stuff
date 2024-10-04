@@ -1,0 +1,1 @@
+{'Id': 'i-0ff77c323d55ed011', 'Data': {'AWS:InstanceInformation': {'TypeName': 'AWS:InstanceInformation', 'SchemaVersion': '1.0', 'CaptureTime': '2024-02-07T23:32:54Z', 'Content': [{'InstanceId': 'i-0ff77c323d55ed022', 'InstanceStatus': 'Terminated'}]}}}
