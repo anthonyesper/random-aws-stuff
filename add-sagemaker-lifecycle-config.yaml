@@ -1,0 +1,31 @@
+Resources:
+  # Lifecycle Configuration
+  SageMakerLifecycleConfig:
+    Type: "AWS::SageMaker::NotebookInstanceLifecycleConfig"
+    Properties:
+      OnStart:
+        - Content: !Sub |
+            #!/bin/bash
+            # Clone or update the Git repository
+            REPO_DIR="/home/sagemaker-user/your-repo-name"
+            if [ ! -d "$REPO_DIR" ]; then
+              git clone https://github.com/yourusername/your-repo-name.git "$REPO_DIR"
+            else
+              cd "$REPO_DIR"
+              git pull
+            fi
+
+  # Update the existing User Profile with Lifecycle Configuration
+  MyUserProfile:
+    Type: "AWS::SageMaker::UserProfile"
+    Properties:
+      DomainId: "your-existing-domain-id"  # Replace with your existing SageMaker Domain ID
+      UserProfileName: "your-existing-user-profile-name"  # Replace with your existing User Profile Name
+      UserSettings:
+        ExecutionRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/YourSageMakerExecutionRole"
+        JupyterServerAppSettings:
+          LifecycleConfigArns:
+            - !Ref SageMakerLifecycleConfig
+        KernelGatewayAppSettings:
+          LifecycleConfigArns:
+            - !Ref SageMakerLifecycleConfig
